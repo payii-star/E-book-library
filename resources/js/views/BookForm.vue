@@ -1,6 +1,14 @@
 <template>
   <div class="page-container">
 
+    <!-- Toast Notification -->
+    <Teleport to="body">
+      <div v-if="toast.show" :class="['toast-notif', `toast-${toast.type}`]">
+        <span class="toast-ico">{{ toast.type === 'success' ? '✅' : '❌' }}</span>
+        <span class="toast-msg">{{ toast.message }}</span>
+      </div>
+    </Teleport>
+
     <!-- Header -->
     <div class="page-header">
       <div>
@@ -192,6 +200,17 @@ export default defineComponent({
     const chapterForm = reactive({ chapter_number: "", title: "", content: "" });
     const errors = reactive<any>({});
 
+    // ===== TOAST =====
+    const toast = reactive({ show: false, message: "", type: "success" });
+    let toastTimer: any = null;
+    const showToast = (message: string, type = "success") => {
+      clearTimeout(toastTimer);
+      toast.message = message;
+      toast.type = type;
+      toast.show = true;
+      toastTimer = setTimeout(() => { toast.show = false; }, 3000);
+    };
+
     const triggerCoverInput = () => coverInput.value?.click();
     const onCoverChange = (e: Event) => {
       const f = (e.target as HTMLInputElement).files?.[0];
@@ -214,19 +233,24 @@ export default defineComponent({
       saving.value = true;
       try {
         const fd = new FormData();
-        Object.entries(form).forEach(([k, v]) => { if (v) fd.append(k, v as string); });
+        Object.entries(form).forEach(([k, v]) => { if (v !== null && v !== undefined && v !== '') fd.append(k, v as string); });
         if (coverFile.value) fd.append("cover_image", coverFile.value);
 
         if (isEdit.value) {
-          await ApiService.put(`admin/books/${route.params.id}`, Object.fromEntries(fd));
+          await ApiService.post(`admin/books/${route.params.id}`, fd);
+          showToast("✅ Buku berhasil diperbarui!");
+          coverFile.value = null;
+          setTimeout(() => router.push("/admin/books"), 1200);
         } else {
           await ApiService.post("admin/books", fd);
-          router.push("/admin/books");
+          showToast("✅ Buku berhasil ditambahkan!");
+          setTimeout(() => router.push("/admin/books"), 1200);
         }
       } catch (e: any) {
         if (e.response?.data?.errors) {
           Object.assign(errors, e.response.data.errors);
         }
+        showToast("❌ Gagal menyimpan. Cek kembali form.", "error");
       }
       saving.value = false;
     };
@@ -254,13 +278,17 @@ export default defineComponent({
           const res = await ApiService.put(`admin/chapters/${editingChapter.value.id}`, chapterForm);
           const idx = chapters.value.findIndex(c => c.id === editingChapter.value.id);
           if (idx !== -1) chapters.value[idx] = res.data;
+          showToast("✅ Chapter berhasil diperbarui!");
         } else {
           const res = await ApiService.post(`admin/books/${route.params.id}/chapters`, chapterForm);
           chapters.value.push(res.data);
           chapters.value.sort((a,b) => a.chapter_number - b.chapter_number);
+          showToast("✅ Chapter berhasil ditambahkan!");
         }
         closeChapterModal();
-      } catch {}
+      } catch {
+        showToast("❌ Gagal menyimpan chapter.", "error");
+      }
       savingChapter.value = false;
     };
 
@@ -269,7 +297,10 @@ export default defineComponent({
       try {
         await ApiService.delete(`admin/chapters/${id}`);
         chapters.value = chapters.value.filter(c => c.id !== id);
-      } catch {}
+        showToast("🗑️ Chapter berhasil dihapus!");
+      } catch {
+        showToast("❌ Gagal menghapus chapter.", "error");
+      }
     };
 
     const loadData = async () => {
@@ -294,7 +325,7 @@ export default defineComponent({
     onMounted(loadData);
 
     return { isEdit, form, errors, categories, chapters, saving, savingChapter,
-             showAddChapter, editingChapter, chapterForm, coverInput, coverPreview,
+             showAddChapter, editingChapter, chapterForm, coverInput, coverPreview, toast,
              triggerCoverInput, onCoverChange, removeCover, saveBook,
              editChapter, closeChapterModal, saveChapter, deleteChapter };
   }
@@ -304,6 +335,20 @@ export default defineComponent({
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
 * { font-family: 'Outfit', sans-serif; }
+
+/* ===== TOAST ===== */
+.toast-notif {
+  position: fixed; bottom: 28px; right: 28px; z-index: 99999;
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 20px; border-radius: 14px;
+  font-size: 14px; font-weight: 600; font-family: 'Outfit', sans-serif;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  animation: toastIn 0.3s ease;
+}
+.toast-success { background: #0d1f0d; border: 1px solid rgba(104,211,145,0.3); color: #68d391; }
+.toast-error   { background: #1f0d0d; border: 1px solid rgba(252,129,129,0.3); color: #fc8181; }
+.toast-ico { font-size: 16px; }
+@keyframes toastIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
 
 .page-container { display: flex; flex-direction: column; gap: 20px; }
 .page-header { display: flex; align-items: flex-start; justify-content: space-between; }
@@ -324,11 +369,7 @@ export default defineComponent({
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .field-label { font-size: 12px; font-weight: 600; color: #a0aec0; letter-spacing: 0.4px; text-transform: uppercase; }
 .req { color: #fc8181; }
-.field-input, .field-select, .field-textarea {
-  background: #1a1a1a; border: 1.5px solid #333; border-radius: 12px;
-  padding: 12px 14px; color: #e2e8f0; font-size: 14px; outline: none;
-  transition: border-color 0.2s; width: 100%;
-}
+.field-input, .field-select, .field-textarea { background: #1a1a1a; border: 1.5px solid #333; border-radius: 12px; padding: 12px 14px; color: #e2e8f0; font-size: 14px; outline: none; transition: border-color 0.2s; width: 100%; }
 .field-input:focus, .field-select:focus, .field-textarea:focus { border-color: #63b3ed; background: rgba(99,179,237,0.05); }
 .field-input::placeholder, .field-textarea::placeholder { color: #2d4a6a; }
 .field-textarea { resize: vertical; font-family: inherit; }
@@ -339,7 +380,6 @@ export default defineComponent({
 .toggle-active-warn { background: rgba(246,173,85,0.1); border-color: rgba(246,173,85,0.3); color: #f6ad55; }
 .toggle-active-green { background: rgba(104,211,145,0.1); border-color: rgba(104,211,145,0.3); color: #68d391; }
 
-/* Cover */
 .cover-upload { height: 220px; border: 2px dashed #333; border-radius: 14px; cursor: pointer; background-size: cover; background-position: center; background-repeat: no-repeat; display: flex; align-items: center; justify-content: center; transition: border-color 0.2s; position: relative; overflow: hidden; }
 .cover-upload:hover { border-color: #63b3ed; }
 .cover-placeholder { text-align: center; color: #4a6080; }
@@ -362,7 +402,6 @@ export default defineComponent({
 .btn-cancel-full:hover { color: #a0aec0; background: #222; }
 .w-100 { width: 100%; }
 
-/* Chapter list */
 .chapter-empty { text-align: center; padding: 30px; color: #4a6080; font-size: 13px; }
 .chapter-list { display: flex; flex-direction: column; gap: 8px; }
 .chapter-item { display: flex; align-items: center; gap: 14px; padding: 12px 14px; background: #1a1a1a; border: 1px solid #333; border-radius: 12px; transition: all 0.2s; }
@@ -378,7 +417,6 @@ export default defineComponent({
 .btn-add-chapter { padding: 8px 16px; background: rgba(99,179,237,0.1); border: 1px solid rgba(99,179,237,0.2); border-radius: 10px; color: #63b3ed; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: 'Outfit', sans-serif; }
 .btn-add-chapter:hover { background: rgba(99,179,237,0.2); }
 
-/* Chapter Modal */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px; }
 .chapter-modal { background: #111; border: 1px solid #333; border-radius: 20px; padding: 28px; width: 100%; max-width: 700px; max-height: 90vh; overflow-y: auto; }
 .modal-header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }

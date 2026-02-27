@@ -18,12 +18,12 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, nextTick, onMounted, watch } from "vue";
+import { defineComponent, nextTick, onMounted, onUnmounted, watch } from "vue";
 import { useRoute } from "vue-router";
 import KTHeader from "@/layouts/default-layout/components/header/Header.vue";
 import KTToolbar from "@/layouts/default-layout/components/toolbar/Toolbar.vue";
 import KTContent from "@/layouts/default-layout/components/content/Content.vue";
-import KTUserSidebar from "@/layouts/UserSidebar.vue";
+import KTUserSidebar from "@/layouts/Usersidebar.vue";
 import { reinitializeComponents } from "@/core/plugins/keenthemes";
 import LayoutService from "@/core/services/LayoutService";
 
@@ -38,9 +38,27 @@ export default defineComponent({
   setup() {
     const route = useRoute();
 
+    const setBodyAttrs = () => {
+      document.body.setAttribute("data-kt-app-layout", "dark-sidebar");
+      document.body.setAttribute("data-kt-app-header-fixed", "true");
+      document.body.setAttribute("data-kt-app-sidebar-enabled", "true");
+      document.body.setAttribute("data-kt-app-sidebar-fixed", "true");
+      document.body.setAttribute("data-kt-app-sidebar-hoverable", "true");
+      document.body.setAttribute("data-kt-app-sidebar-push-header", "true");
+      document.body.setAttribute("data-kt-app-sidebar-push-toolbar", "true");
+      document.body.setAttribute("data-kt-app-sidebar-push-footer", "true");
+    };
+
     onMounted(() => {
+      setBodyAttrs();
       LayoutService.init();
       nextTick(() => { reinitializeComponents(); });
+    });
+
+    onUnmounted(() => {
+      // Cleanup body attrs saat leave layout
+      document.body.removeAttribute("data-kt-app-layout");
+      document.body.removeAttribute("data-kt-app-sidebar-enabled");
     });
 
     watch(() => route.path, () => {

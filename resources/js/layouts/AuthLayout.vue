@@ -37,9 +37,18 @@
       <!--begin::Content-->
       <div class="d-flex flex-column flex-center py-15 px-10 w-100 position-relative" style="z-index:2">
 
-        <!-- Logo -->
-        <router-link to="/" class="mb-14">
-          <img alt="Logo" :src="getAssetPath('media/logos/custom-1.png')" class="h-50px h-lg-65px logo-glow"/>
+        <!-- Logo & Brand -->
+        <router-link to="/" class="mb-14 brand-wrapper">
+          <div class="brand-logo-box">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#63b3ed" stroke-width="1.8">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+            </svg>
+          </div>
+          <div class="brand-text-box">
+            <span class="brand-name">E-Library</span>
+            <span class="brand-tagline">Perpustakaan Digital</span>
+          </div>
         </router-link>
 
         <!-- Main glass card -->
@@ -50,41 +59,44 @@
           <div class="icon-row mb-6">
             <div class="glass-icon gi-blue">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#63b3ed" stroke-width="1.8">
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
               </svg>
             </div>
             <div class="glass-icon gi-teal">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4fd1c5" stroke-width="1.8">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
               </svg>
             </div>
             <div class="glass-icon gi-indigo">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7f9cf5" stroke-width="1.8">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="12"></line>
-                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
               </svg>
             </div>
           </div>
 
           <h2 class="glass-title mb-3">Selamat Datang</h2>
-          <p class="glass-desc mb-8">Platform modern dengan keamanan tingkat tinggi.<br/>Data kamu terlindungi sepenuhnya.</p>
+          <p class="glass-desc mb-8">Akses ribuan koleksi buku digital.<br/>Baca kapan saja, di mana saja.</p>
 
           <!-- Stats -->
           <div class="stats-row">
             <div class="stat-item">
-              <div class="stat-value" style="color:#63b3ed">256-bit</div>
-              <div class="stat-label">Enkripsi</div>
+              <div class="stat-value" style="color:#63b3ed">100+</div>
+              <div class="stat-label">Koleksi</div>
             </div>
             <div class="stat-divider"></div>
             <div class="stat-item">
-              <div class="stat-value" style="color:#4fd1c5">99.9%</div>
-              <div class="stat-label">Uptime</div>
+              <div class="stat-value" style="color:#4fd1c5">24/7</div>
+              <div class="stat-label">Akses</div>
             </div>
             <div class="stat-divider"></div>
             <div class="stat-item">
-              <div class="stat-value" style="color:#7f9cf5">24/7</div>
-              <div class="stat-label">Support</div>
+              <div class="stat-value" style="color:#7f9cf5">Gratis</div>
+              <div class="stat-label">Selamanya</div>
             </div>
           </div>
         </div>
@@ -93,15 +105,15 @@
         <div class="feature-row">
           <div class="feature-pill">
             <span class="pill-dot" style="background:#63b3ed;box-shadow:0 0 8px #63b3ed"></span>
-            Aman & Terpercaya
+            Koleksi Buku Lengkap
           </div>
           <div class="feature-pill">
             <span class="pill-dot" style="background:#4fd1c5;box-shadow:0 0 8px #4fd1c5"></span>
-            Enkripsi End-to-End
+            Baca Online & Offline
           </div>
           <div class="feature-pill">
             <span class="pill-dot" style="background:#7f9cf5;box-shadow:0 0 8px #7f9cf5"></span>
-            Privasi Terjaga
+            Bookmark & Riwayat Baca
           </div>
         </div>
 
@@ -228,12 +240,50 @@ export default defineComponent({
 .p-5{width:4px;height:4px;background:#4fd1c5;bottom:15%;left:35%;animation-duration:5.5s;animation-delay:1.5s}
 .p-6{width:3px;height:3px;background:#7f9cf5;top:75%;right:10%;animation-duration:6.5s;animation-delay:3s}
 
-/* Logo */
-.logo-glow {
-  filter: drop-shadow(0 0 16px rgba(99,179,237,0.5));
-  transition: filter 0.3s;
+/* Brand */
+.brand-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-decoration: none;
+  margin-bottom: 3.5rem;
+  transition: opacity 0.2s;
 }
-.logo-glow:hover { filter: drop-shadow(0 0 28px rgba(99,179,237,0.8)); }
+.brand-wrapper:hover { opacity: 0.85; }
+
+.brand-logo-box {
+  width: 56px; height: 56px;
+  background: rgba(99,179,237,0.1);
+  border: 1.5px solid rgba(99,179,237,0.25);
+  border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 20px rgba(99,179,237,0.2);
+}
+
+.brand-text-box {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brand-name {
+  font-size: 1.6rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #e2e8f0 30%, #63b3ed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+}
+
+.brand-tagline {
+  font-size: 11px;
+  color: #4a6080;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
 
 /* Glass card */
 .main-glass-card {

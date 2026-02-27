@@ -40,50 +40,13 @@
 
         <div class="header-divider d-none d-md-block"></div>
 
-        <!-- USER DROPDOWN -->
-        <div
-          class="user-trigger d-flex align-items-center gap-2 cursor-pointer"
-          data-kt-menu-trigger="click"
-          data-kt-menu-attach="parent"
-          data-kt-menu-placement="bottom-end"
-        >
+        <!-- USER (no dropdown) -->
+        <div class="user-info d-flex align-items-center gap-2">
           <div class="avatar-ring">
             <div class="avatar-label">{{ initials }}</div>
           </div>
           <div class="d-none d-sm-block">
             <div class="user-name">{{ authStore.user.name }}</div>
-          </div>
-          <svg class="chevron-icon" width="14" height="14" viewBox="0 0 24 24" fill="none">
-            <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-
-        <!-- Dropdown -->
-        <div
-          class="menu menu-sub menu-sub-dropdown menu-rounded menu-state-primary fw-semibold fs-6 dropdown-panel"
-          data-kt-menu="true"
-        >
-          <div class="dropdown-profile px-5 py-4">
-            <div class="d-flex align-items-center gap-3">
-              <div class="avatar-ring avatar-lg">
-                <div class="avatar-label">{{ initials }}</div>
-              </div>
-              <div>
-                <div class="dropdown-name">{{ authStore.user.name }}</div>
-                <div class="dropdown-role">Administrator</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="dropdown-sep"></div>
-
-          <div class="dropdown-items px-3 pb-3">
-            <a class="dropdown-item" @click="logout">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              <span>Sign Out</span>
-            </a>
           </div>
         </div>
 
@@ -166,18 +129,14 @@ export default defineComponent({
   z-index: 0;
 }
 .glow-left {
-  width: 200px;
-  height: 100px;
+  width: 200px; height: 100px;
   background: rgba(59, 130, 246, 0.08);
-  top: -30px;
-  left: 40%;
+  top: -30px; left: 40%;
 }
 .glow-right {
-  width: 160px;
-  height: 80px;
+  width: 160px; height: 80px;
   background: rgba(139, 92, 246, 0.06);
-  top: -20px;
-  right: 120px;
+  top: -20px; right: 120px;
 }
 
 /* Mobile toggle */
@@ -185,26 +144,17 @@ export default defineComponent({
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
-  width: 38px;
-  height: 38px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  cursor: pointer;
+  width: 38px; height: 38px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 5px; cursor: pointer;
   transition: all 0.2s ease;
 }
 .mobile-toggle-btn:hover {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.18);
 }
-.bar {
-  display: block;
-  height: 1.5px;
-  background: rgba(255, 255, 255, 0.75);
-  border-radius: 2px;
-}
+.bar { display: block; height: 1.5px; background: rgba(255, 255, 255, 0.75); border-radius: 2px; }
 .bar-1 { width: 16px; }
 .bar-2 { width: 12px; }
 .bar-3 { width: 14px; }
@@ -217,135 +167,43 @@ export default defineComponent({
   padding: 5px 12px;
 }
 .status-dot {
-  width: 6px;
-  height: 6px;
-  background: #10b981;
-  border-radius: 50%;
+  width: 6px; height: 6px;
+  background: #10b981; border-radius: 50%;
   box-shadow: 0 0 6px rgba(16, 185, 129, 0.8);
   animation: pulse-dot 2.5s ease-in-out infinite;
 }
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-.status-text {
-  font-size: 11.5px;
-  font-weight: 500;
-  color: #6ee7b7;
-  letter-spacing: 0.3px;
-}
+@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+.status-text { font-size: 11.5px; font-weight: 500; color: #6ee7b7; letter-spacing: 0.3px; }
 
-.header-divider {
-  width: 1px;
-  height: 28px;
-  background: rgba(255, 255, 255, 0.08);
-}
+.header-divider { width: 1px; height: 28px; background: rgba(255, 255, 255, 0.08); }
 
-/* User trigger */
-.user-trigger {
+/* User info (no dropdown) */
+.user-info {
   padding: 5px 10px 5px 5px;
   border-radius: 40px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.04);
-  transition: all 0.2s ease;
-}
-.user-trigger:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.14);
 }
 
 /* Avatar */
 .avatar-ring {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
+  width: 34px; height: 34px; border-radius: 50%;
   background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  position: relative; flex-shrink: 0;
 }
 .avatar-ring::before {
   content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.5), rgba(139, 92, 246, 0.5));
+  position: absolute; inset: -2px; border-radius: 50%;
+  background: linear-gradient(135deg, rgba(59,130,246,0.5), rgba(139,92,246,0.5));
   z-index: -1;
 }
 .avatar-label {
   font-family: 'Syne', sans-serif;
-  font-weight: 700;
-  font-size: 13px;
-  color: #fff;
-  letter-spacing: 0.3px;
-}
-.avatar-lg { width: 42px; height: 42px; }
-.avatar-lg .avatar-label { font-size: 15px; }
-
-.user-name {
-  font-size: 13px;
-  font-weight: 500;
-  color: #e2e8f0;
-  line-height: 1;
+  font-weight: 700; font-size: 13px; color: #fff; letter-spacing: 0.3px;
 }
 
-.chevron-icon {
-  color: rgba(255, 255, 255, 0.35);
-  transition: transform 0.2s ease;
-}
-
-/* Dropdown */
-.dropdown-panel {
-  background: rgba(10, 13, 25, 0.95) !important;
-  backdrop-filter: blur(24px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  border-radius: 16px !important;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04) !important;
-  min-width: 230px !important;
-  overflow: hidden;
-  padding: 0 !important;
-  margin-top: 10px !important;
-}
-.dropdown-profile { background: rgba(255, 255, 255, 0.03); }
-.dropdown-name {
-  font-family: 'Syne', sans-serif;
-  font-weight: 600;
-  font-size: 14px;
-  color: #f1f5f9;
-  line-height: 1.3;
-}
-.dropdown-role {
-  font-size: 11px;
-  color: #60a5fa;
-  font-weight: 500;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  margin-top: 2px;
-}
-.dropdown-sep {
-  height: 1px;
-  background: rgba(255, 255, 255, 0.06);
-  margin: 0;
-}
-.dropdown-items { padding-top: 8px; }
-.dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  border-radius: 10px;
-  color: #94a3b8;
-  font-size: 13.5px;
-  font-weight: 400;
-  cursor: pointer;
-  text-decoration: none;
-  transition: all 0.15s ease;
-}
-.dropdown-item:hover { background: rgba(239, 68, 68, 0.1); color: #fca5a5; }
-.dropdown-item svg { flex-shrink: 0; opacity: 0.7; }
-.dropdown-item:hover svg { opacity: 1; }
+.user-name { font-size: 13px; font-weight: 500; color: #e2e8f0; line-height: 1; }
 
 .gap-2 { gap: 8px !important; }
 .gap-3 { gap: 12px !important; }

@@ -5,7 +5,7 @@
       <div class="hero-bg"><div class="hero-grid"></div><div class="hero-glow"></div></div>
       <div class="hero-content">
         <div class="hero-left">
-          <div class="hero-tag">E-Library SMKN 2 Surabaya</div>
+          <div class="hero-tag">E-Library</div>
           <h1 class="hero-name">Halo, {{ authStore.user?.name?.split(' ')[0] }} 👋</h1>
           <p class="hero-sub">Temukan buku favoritmu dan mulai membaca sekarang</p>
           <router-link to="/user/books" class="hero-cta">Jelajahi Perpustakaan →</router-link>
