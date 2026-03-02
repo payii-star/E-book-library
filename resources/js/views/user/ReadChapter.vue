@@ -117,14 +117,29 @@ export default defineComponent({
       return data.value.chapter.content.split('\n').filter((p: string) => p.trim());
     });
 
+    // Auto-simpan riwayat baca
+    const saveHistory = async () => {
+      if (!data.value?.book?.id || !data.value?.chapter?.id) return;
+      try {
+        ApiService.setHeader();
+        await ApiService.post("reading-history", {
+          book_id:    data.value.book.id,
+          chapter_id: data.value.chapter.id,
+        });
+      } catch {}
+    };
+
     const loadChapter = async () => {
       loading.value = true;
       needLogin.value = false;
       try {
+        ApiService.setHeader();
         const r = await ApiService.get(`books/${route.params.slug}/chapters/${route.params.number}`);
         data.value = r.data;
         window.scrollTo({ top: 0, behavior: 'smooth' });
         loadComments();
+        // Simpan riwayat baca setelah chapter berhasil dimuat
+        await saveHistory();
       } catch (e: any) {
         if (e.response?.status === 401) needLogin.value = true;
         data.value = null;
@@ -168,7 +183,6 @@ export default defineComponent({
 
 .reader-wrap { display: flex; flex-direction: column; min-height: 100vh; }
 
-/* TOPBAR */
 .reader-topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; background: #080808; border: 1px solid #1a1a1a; border-radius: 14px; margin-bottom: 20px; position: sticky; top: 10px; z-index: 10; backdrop-filter: blur(20px); }
 .topbar-back { color: #63b3ed; text-decoration: none; font-size: 13px; font-weight: 600; font-family: 'DM Sans', sans-serif; }
 .topbar-back:hover { color: #90cdf4; }
@@ -197,7 +211,6 @@ export default defineComponent({
 .gate-btn { padding: 12px 28px; background: linear-gradient(135deg,#2b6cb0,#1a365d); color: white; border-radius: 12px; text-decoration: none; font-size: 14px; font-weight: 700; font-family: 'DM Sans', sans-serif; transition: all 0.2s; margin-top: 4px; }
 .gate-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(43,108,176,0.4); color: white; }
 
-/* READER BODY */
 .reader-body { max-width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 32px; }
 .reader-body.narrow { max-width: 680px; }
 
@@ -214,9 +227,7 @@ export default defineComponent({
 .nav-btn:hover { border-color: #2b6cb0; color: #63b3ed; background: #0a1628; }
 .nav-prev { text-align: left; }
 .nav-next { text-align: right; }
-.nav-empty {}
 
-/* COMMENTS */
 .comments-section { background: #0d0d0d; border: 1px solid #1a1a1a; border-radius: 16px; padding: 22px; }
 .comments-title { font-size: 15px; font-weight: 700; color: #e2e8f0; margin-bottom: 16px; font-family: 'Fraunces', serif; }
 .comment-form { margin-bottom: 20px; }

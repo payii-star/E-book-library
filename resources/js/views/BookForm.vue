@@ -44,12 +44,25 @@
           </div>
 
           <div class="field-row">
+            <!-- ✅ Custom Kategori Dropdown -->
             <div class="field-group">
               <label class="field-label">Kategori <span class="req">*</span></label>
-              <select v-model="form.category_id" class="field-select">
-                <option value="">Pilih kategori</option>
-                <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-              </select>
+              <div class="custom-select-wrap" ref="catDropRef">
+                <button type="button" class="custom-select-btn" @click="catOpen = !catOpen">
+                  <span :class="!form.category_id ? 'sel-placeholder' : ''">
+                    {{ form.category_id ? (categories.find(c=>c.id==form.category_id)?.name||'Pilih kategori') : 'Pilih kategori' }}
+                  </span>
+                  <svg class="sel-chevron" :class="{open: catOpen}" width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <div v-if="catOpen" class="custom-select-dropdown">
+                  <div class="sel-option sel-placeholder-opt" @click="form.category_id=''; catOpen=false">Pilih kategori</div>
+                  <div class="sel-option" v-for="cat in categories" :key="cat.id"
+                    :class="{active: form.category_id==cat.id}"
+                    @click="form.category_id=cat.id; catOpen=false">
+                    {{ cat.name }}
+                  </div>
+                </div>
+              </div>
               <span v-if="errors.category_id" class="field-err">{{ errors.category_id }}</span>
             </div>
             <div class="field-group">
@@ -81,7 +94,7 @@
         <div v-if="isEdit" class="form-card">
           <div class="form-card-title-row">
             <div class="form-card-title">Kelola Chapter</div>
-            <button class="btn-add-chapter" @click="showAddChapter = true">＋ Tambah Chapter</button>
+            <button class="btn-add-chapter" @click="router.push(`/admin/books/${route.params.id}/chapters`)">＋ Tambah Chapter</button>
           </div>
 
           <div v-if="chapters.length === 0" class="chapter-empty">
@@ -171,7 +184,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, reactive, computed, onMounted } from "vue";
+import { defineComponent, ref, reactive, computed, onMounted, onUnmounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import ApiService from "@/core/services/ApiService";
 
@@ -192,22 +205,28 @@ export default defineComponent({
     const coverPreview = ref<string | null>(null);
     const coverFile = ref<File | null>(null);
 
+    // Custom dropdown
+    const catOpen = ref(false);
+    const catDropRef = ref<HTMLElement|null>(null);
+    const onOutsideClick = (e: MouseEvent) => {
+      if (catDropRef.value && !catDropRef.value.contains(e.target as Node)) catOpen.value = false;
+    };
+    onMounted(() => document.addEventListener('click', onOutsideClick));
+    onUnmounted(() => document.removeEventListener('click', onOutsideClick));
+
     const form = reactive({
-      title: "", author: "", publisher: "", category_id: "",
+      title: "", author: "", publisher: "", category_id: <any>"",
       published_year: "", isbn: "", synopsis: "", status: "draft",
     });
 
     const chapterForm = reactive({ chapter_number: "", title: "", content: "" });
     const errors = reactive<any>({});
 
-    // ===== TOAST =====
     const toast = reactive({ show: false, message: "", type: "success" });
     let toastTimer: any = null;
     const showToast = (message: string, type = "success") => {
       clearTimeout(toastTimer);
-      toast.message = message;
-      toast.type = type;
-      toast.show = true;
+      toast.message = message; toast.type = type; toast.show = true;
       toastTimer = setTimeout(() => { toast.show = false; }, 3000);
     };
 
@@ -235,7 +254,6 @@ export default defineComponent({
         const fd = new FormData();
         Object.entries(form).forEach(([k, v]) => { if (v !== null && v !== undefined && v !== '') fd.append(k, v as string); });
         if (coverFile.value) fd.append("cover_image", coverFile.value);
-
         if (isEdit.value) {
           await ApiService.post(`admin/books/${route.params.id}`, fd);
           showToast("✅ Buku berhasil diperbarui!");
@@ -247,9 +265,7 @@ export default defineComponent({
           setTimeout(() => router.push("/admin/books"), 1200);
         }
       } catch (e: any) {
-        if (e.response?.data?.errors) {
-          Object.assign(errors, e.response.data.errors);
-        }
+        if (e.response?.data?.errors) Object.assign(errors, e.response.data.errors);
         showToast("❌ Gagal menyimpan. Cek kembali form.", "error");
       }
       saving.value = false;
@@ -263,11 +279,8 @@ export default defineComponent({
     };
 
     const closeChapterModal = () => {
-      showAddChapter.value = false;
-      editingChapter.value = null;
-      chapterForm.chapter_number = "";
-      chapterForm.title = "";
-      chapterForm.content = "";
+      showAddChapter.value = false; editingChapter.value = null;
+      chapterForm.chapter_number = ""; chapterForm.title = ""; chapterForm.content = "";
     };
 
     const saveChapter = async () => {
@@ -286,9 +299,7 @@ export default defineComponent({
           showToast("✅ Chapter berhasil ditambahkan!");
         }
         closeChapterModal();
-      } catch {
-        showToast("❌ Gagal menyimpan chapter.", "error");
-      }
+      } catch { showToast("❌ Gagal menyimpan chapter.", "error"); }
       savingChapter.value = false;
     };
 
@@ -298,9 +309,7 @@ export default defineComponent({
         await ApiService.delete(`admin/chapters/${id}`);
         chapters.value = chapters.value.filter(c => c.id !== id);
         showToast("🗑️ Chapter berhasil dihapus!");
-      } catch {
-        showToast("❌ Gagal menghapus chapter.", "error");
-      }
+      } catch { showToast("❌ Gagal menghapus chapter.", "error"); }
     };
 
     const loadData = async () => {
@@ -308,7 +317,6 @@ export default defineComponent({
         const catRes = await ApiService.get("categories");
         categories.value = catRes.data;
       } catch {}
-
       if (isEdit.value) {
         try {
           const res = await ApiService.get(`admin/books/${route.params.id}`);
@@ -326,8 +334,9 @@ export default defineComponent({
 
     return { isEdit, form, errors, categories, chapters, saving, savingChapter,
              showAddChapter, editingChapter, chapterForm, coverInput, coverPreview, toast,
+             catOpen, catDropRef,
              triggerCoverInput, onCoverChange, removeCover, saveBook,
-             editChapter, closeChapterModal, saveChapter, deleteChapter };
+             editChapter, closeChapterModal, saveChapter, deleteChapter, router, route };
   }
 });
 </script>
@@ -336,18 +345,9 @@ export default defineComponent({
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
 * { font-family: 'Outfit', sans-serif; }
 
-/* ===== TOAST ===== */
-.toast-notif {
-  position: fixed; bottom: 28px; right: 28px; z-index: 99999;
-  display: flex; align-items: center; gap: 10px;
-  padding: 14px 20px; border-radius: 14px;
-  font-size: 14px; font-weight: 600; font-family: 'Outfit', sans-serif;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-  animation: toastIn 0.3s ease;
-}
+.toast-notif { position: fixed; bottom: 28px; right: 28px; z-index: 99999; display: flex; align-items: center; gap: 10px; padding: 14px 20px; border-radius: 14px; font-size: 14px; font-weight: 600; font-family: 'Outfit', sans-serif; box-shadow: 0 8px 32px rgba(0,0,0,0.4); animation: toastIn 0.3s ease; }
 .toast-success { background: #0d1f0d; border: 1px solid rgba(104,211,145,0.3); color: #68d391; }
 .toast-error   { background: #1f0d0d; border: 1px solid rgba(252,129,129,0.3); color: #fc8181; }
-.toast-ico { font-size: 16px; }
 @keyframes toastIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
 
 .page-container { display: flex; flex-direction: column; gap: 20px; }
@@ -360,7 +360,6 @@ export default defineComponent({
 .form-grid { display: grid; grid-template-columns: 1fr 300px; gap: 20px; align-items: start; }
 .form-main { display: flex; flex-direction: column; gap: 20px; }
 .form-side { display: flex; flex-direction: column; gap: 16px; }
-
 .form-card { background: #111; border: 1px solid #222; border-radius: 18px; padding: 24px; }
 .form-card-title { font-size: 15px; font-weight: 700; color: #e2e8f0; margin-bottom: 20px; }
 .form-card-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
@@ -369,11 +368,25 @@ export default defineComponent({
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .field-label { font-size: 12px; font-weight: 600; color: #a0aec0; letter-spacing: 0.4px; text-transform: uppercase; }
 .req { color: #fc8181; }
-.field-input, .field-select, .field-textarea { background: #1a1a1a; border: 1.5px solid #333; border-radius: 12px; padding: 12px 14px; color: #e2e8f0; font-size: 14px; outline: none; transition: border-color 0.2s; width: 100%; }
-.field-input:focus, .field-select:focus, .field-textarea:focus { border-color: #63b3ed; background: rgba(99,179,237,0.05); }
+.field-input, .field-textarea { background: #1a1a1a; border: 1.5px solid #333; border-radius: 12px; padding: 12px 14px; color: #e2e8f0; font-size: 14px; outline: none; transition: border-color 0.2s; width: 100%; }
+.field-input:focus, .field-textarea:focus { border-color: #63b3ed; background: rgba(99,179,237,0.05); }
 .field-input::placeholder, .field-textarea::placeholder { color: #2d4a6a; }
 .field-textarea { resize: vertical; font-family: inherit; }
 .field-err { font-size: 11.5px; color: #fc8181; }
+
+/* ✅ Custom Select */
+.custom-select-wrap { position: relative; width: 100%; }
+.custom-select-btn { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; background: #1a1a1a; border: 1.5px solid #333; border-radius: 12px; color: #e2e8f0; font-size: 14px; font-family: 'Outfit', sans-serif; cursor: pointer; transition: all 0.2s; text-align: left; }
+.custom-select-btn:hover, .custom-select-btn:focus { border-color: #63b3ed; background: rgba(99,179,237,0.05); outline: none; }
+.sel-placeholder { color: #2d4a6a; }
+.sel-chevron { color: #4a6080; transition: transform 0.2s; flex-shrink: 0; }
+.sel-chevron.open { transform: rotate(180deg); }
+.custom-select-dropdown { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #141414; border: 1px solid #2a2a2a; border-radius: 12px; overflow: hidden; z-index: 999; box-shadow: 0 12px 32px rgba(0,0,0,0.5); animation: dropIn 0.15s ease; max-height: 220px; overflow-y: auto; }
+@keyframes dropIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+.sel-option { padding: 10px 14px; font-size: 13px; color: #a0aec0; cursor: pointer; transition: background 0.15s; }
+.sel-option:hover { background: rgba(255,255,255,0.05); color: #e2e8f0; }
+.sel-option.active { color: #63b3ed; background: rgba(99,179,237,0.08); }
+.sel-placeholder-opt { color: #2d4a6a; }
 
 .toggle-group { display: flex; gap: 10px; }
 .toggle-btn { padding: 10px 20px; border-radius: 10px; border: 1.5px solid #333; background: #1a1a1a; color: #718096; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: 'Outfit', sans-serif; }

@@ -39,10 +39,10 @@
     </Teleport>
     <!-- ===== END LIGHTBOX ===== -->
 
-    <div class="row g-5 g-xl-10">
+    <div class="profile-grid">
 
       <!--begin::Sidebar-->
-      <div class="col-xl-4">
+      <div class="profile-left">
         <div class="card card-dark animate-card-stagger-1">
           <div class="card-body position-relative">
             <div class="card-shine"></div>
@@ -164,8 +164,8 @@
       </div>
       <!--end::Sidebar-->
 
-      <!--begin::Main Form-->
-      <div class="col-xl-8">
+      <!--begin::Main Form - STICKY -->
+      <div class="profile-right">
         <div class="card card-dark animate-card-stagger-3">
           <div class="card-header border-0 pt-6 position-relative">
             <div class="card-shine"></div>
@@ -310,7 +310,6 @@ export default defineComponent({
       if (input) input.value = '';
     };
 
-    // Field config tanpa jabatan & perusahaan
     const fieldConfig = [
       { key: "name",  label: "Nama Lengkap" },
       { key: "email", label: "Email" },
@@ -353,7 +352,6 @@ export default defineComponent({
       submitButton.value!.disabled = false;
     };
 
-    // Proximity effect
     let rafId: number | null = null;
     let lastMouse = { x: -9999, y: -9999 };
     const proximitySelectors = ['.card-dark', '.avatar-container', '.contact-item', '.field-item', '.btn-black-solid', '.btn-black-outline'];
@@ -438,7 +436,38 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.profile-container { position: relative; overflow: hidden; min-height: 100vh; }
+/* ===== FIX STICKY: overflow visible, pakai CSS Grid ===== */
+.profile-container {
+  position: relative;
+  overflow: visible;   /* ← fix: bukan hidden */
+  min-height: 100vh;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 24px;
+  align-items: start;  /* ← penting untuk sticky */
+}
+
+.profile-left {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.profile-right {
+  position: sticky;
+  top: 85px;           /* ← sesuai tinggi navbar */
+  align-self: flex-start;
+}
+
+@media (max-width: 991px) {
+  .profile-grid { grid-template-columns: 1fr; }
+  .profile-right { position: static; }
+}
+
+/* ===== FLOATING ELEMENTS ===== */
 .floating-elements { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; }
 .floating-circle { position:absolute; border-radius:50%; background:rgba(255,255,255,0.02); }
 .circle-1 { width:80px; height:80px; top:10%; left:10%; }
@@ -448,8 +477,9 @@ export default defineComponent({
 .triangle-1 { border-left:40px solid transparent; border-right:40px solid transparent; border-bottom:70px solid rgba(255,255,255,0.03); top:20%; right:10%; }
 .triangle-2 { border-left:30px solid transparent; border-right:30px solid transparent; border-bottom:50px solid rgba(255,255,255,0.03); bottom:30%; right:25%; }
 
+/* ===== LIGHTBOX ===== */
 .lightbox-overlay { position: fixed; inset: 0; z-index: 99999; display: flex; align-items: center; justify-content: center; }
-.lightbox-backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+.lightbox-backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); }
 .lightbox-content { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 20px; }
 .lightbox-close { position: absolute; top: -50px; right: -10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
 .lightbox-close:hover { background: rgba(255,255,255,0.2); transform: scale(1.1); }
@@ -467,11 +497,13 @@ export default defineComponent({
 .lightbox-enter-from .lightbox-content { transform: scale(0.5); }
 .lightbox-leave-to .lightbox-content { transform: scale(0.7); }
 
+/* ===== AVATAR ===== */
 .avatar-clickable { cursor: pointer; }
 .avatar-container { position: relative; transition: all 0.4s; }
 .avatar-view-hint { position: absolute; inset: 0; border-radius: 50%; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; opacity: 0; cursor: pointer; transition: opacity 0.25s ease; z-index: 2; }
 .avatar-container:hover .avatar-view-hint { opacity: 1; }
 
+/* ===== CARD ===== */
 .card-dark { background:#111; border:1px solid #222; border-radius:20px; box-shadow:0 8px 32px rgba(0,0,0,0.5); position:relative; overflow:hidden; transition:all 0.4s cubic-bezier(0.4,0,0.2,1); }
 .card-dark:hover { transform:translateY(-6px); box-shadow:0 20px 60px rgba(0,0,0,0.6); background:#1a1a1a; }
 .card-shine { position:absolute; top:0; left:-100%; width:100%; height:100%; background:linear-gradient(90deg,transparent,rgba(255,255,255,0.05),transparent); pointer-events:none; }

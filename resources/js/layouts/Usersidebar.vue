@@ -10,7 +10,7 @@
     data-kt-drawer-direction="start"
     data-kt-drawer-toggle="#kt_app_sidebar_mobile_toggle"
   >
-    <!-- ✅ Logo sama persis admin, badge "User" -->
+    <!-- Logo -->
     <div class="sidebar-logo-wrapper" id="kt_app_sidebar_logo">
       <router-link to="/user/dashboard" class="brand-link">
         <div class="brand-icon">
@@ -23,86 +23,55 @@
         </div>
         <div class="brand-text">
           <span class="brand-name">E-Library</span>
-          <span class="brand-badge">User</span>
         </div>
       </router-link>
     </div>
 
     <!-- Menu -->
-    <div class="app-sidebar-menu overflow-hidden flex-column-fluid">
-      <div
-        id="kt_app_sidebar_menu_wrapper"
-        class="app-sidebar-wrapper hover-scroll-overlay-y my-5"
-        data-kt-scroll="true"
-        data-kt-scroll-activate="true"
-        data-kt-scroll-height="auto"
-        data-kt-scroll-dependencies="#kt_app_sidebar_logo, #kt_app_sidebar_footer"
-        data-kt-scroll-wrappers="#kt_app_sidebar_menu"
-        data-kt-scroll-offset="5px"
-        data-kt-scroll-save-state="true"
-      >
-        <div
-          class="menu menu-column menu-rounded menu-sub-indention px-3"
-          id="kt_app_sidebar_menu"
-          data-kt-menu="true"
-          data-kt-menu-expand="false"
-        >
+    <div class="sidebar-menu-wrapper">
+      <div class="sidebar-scroll-area">
+        <nav class="sidebar-nav">
           <template v-for="(item, i) in UserMenuConfig" :key="i">
-            <div v-if="item.heading" class="menu-item pt-5">
-              <div class="menu-content">
-                <span class="menu-heading fw-bold text-uppercase fs-7">{{ item.heading }}</span>
-              </div>
+            <!-- Section heading -->
+            <div v-if="item.heading" class="nav-section-label">
+              {{ item.heading }}
             </div>
+            <!-- Menu items -->
             <template v-for="(menuItem, j) in item.pages" :key="j">
-              <div class="menu-item">
-                <router-link class="menu-link" active-class="active" :to="menuItem.route">
-                  <span class="menu-icon">
-                    <KTIcon :icon-name="menuItem.keenthemesIcon" icon-class="fs-2" />
-                  </span>
-                  <span class="menu-title">{{ menuItem.heading }}</span>
-                </router-link>
-              </div>
+              <router-link
+                class="nav-item"
+                active-class="is-active"
+                :to="menuItem.route"
+                :style="{ animationDelay: `${(i + j) * 55}ms` }"
+              >
+                <span class="nav-icon">
+                  <KTIcon :icon-name="menuItem.keenthemesIcon" icon-class="fs-5" />
+                </span>
+                <span class="nav-label">{{ menuItem.heading }}</span>
+                <span class="active-pip"></span>
+              </router-link>
             </template>
           </template>
-
-          <!-- Logout -->
-          <div class="menu-item pt-5">
-            <div class="menu-content">
-              <span class="menu-heading fw-bold text-uppercase fs-7">Account</span>
-            </div>
-          </div>
-          <div class="menu-item">
-            <a class="menu-link cursor-pointer" @click="onLogout">
-              <span class="menu-icon">
-                <KTIcon icon-name="exit-right" icon-class="fs-2" />
-              </span>
-              <span class="menu-title">Logout</span>
-            </a>
-          </div>
-        </div>
+        </nav>
       </div>
     </div>
 
-    <!-- Footer sidebar -->
-    <div class="app-sidebar-footer flex-column-auto pt-2 pb-6 px-6" id="kt_app_sidebar_footer">
-      <div class="d-flex align-items-center gap-3">
-        <div class="symbol symbol-35px">
-          <img v-if="authStore.user.avatar" :src="avatarUrl" alt="user" class="rounded-circle object-fit-cover w-35px h-35px" />
-          <div v-else class="symbol-label fw-bold bg-primary text-white fs-7 w-35px h-35px rounded-circle d-flex align-items-center justify-content-center">
-            {{ authStore.user.name ? authStore.user.name.charAt(0).toUpperCase() : 'U' }}
-          </div>
-        </div>
-        <div class="d-flex flex-column">
-          <span class="fw-bold fs-7 text-gray-800">{{ authStore.user.name }}</span>
-          <span class="fs-8 text-muted">User</span>
-        </div>
-      </div>
+    <!-- Footer -->
+    <div class="sidebar-footer" id="kt_app_sidebar_footer">
+      <!-- Logout -->
+      <button class="logout-btn" @click="onLogout">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"
+            stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Logout</span>
+      </button>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, computed } from "vue";
+import { defineComponent } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import UserMenuConfig from "@/layouts/default-layout/config/UserMenuConfig";
@@ -113,24 +82,20 @@ export default defineComponent({
     const router = useRouter();
     const authStore = useAuthStore();
 
-    const avatarUrl = computed(() => {
-      if (!authStore.user.avatar) return null;
-      return `${import.meta.env.VITE_APP_API_URL?.replace('/api', '')}/storage/${authStore.user.avatar}`;
-    });
-
     const onLogout = () => {
       authStore.logout();
       router.push({ name: "user-sign-in" });
     };
 
-    return { authStore, avatarUrl, UserMenuConfig, onLogout };
+    return { UserMenuConfig, onLogout };
   },
 });
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap');
 
+/* ===== LOGO ===== */
 .sidebar-logo-wrapper {
   display: flex;
   align-items: center;
@@ -187,5 +152,125 @@ export default defineComponent({
   border: 1px solid rgba(52,211,153,0.25);
   border-radius: 5px;
   padding: 2px 6px;
+}
+
+/* ===== MENU WRAPPER ===== */
+.sidebar-menu-wrapper {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+}
+.sidebar-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 12px 16px;
+  scrollbar-width: none;
+}
+.sidebar-scroll-area::-webkit-scrollbar { display: none; }
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Section label */
+.nav-section-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #334155;
+  padding: 14px 12px 6px;
+}
+
+/* Nav item */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 11px;
+  color: #64748b;
+  text-decoration: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13.5px;
+  font-weight: 400;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  position: relative;
+  transition: background 0.18s ease, color 0.18s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  animation: nav-in 0.35s ease both;
+}
+@keyframes nav-in {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: #cbd5e1;
+}
+.nav-item.is-active {
+  background: linear-gradient(135deg, rgba(59,130,246,0.16) 0%, rgba(59,130,246,0.06) 100%);
+  color: #93c5fd;
+}
+.active-pip {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #3b82f6;
+  box-shadow: 0 0 7px rgba(59,130,246,0.85);
+  flex-shrink: 0;
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.nav-item.is-active .active-pip { opacity: 1; }
+
+.nav-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: inherit;
+}
+.nav-label { flex: 1; line-height: 1.3; }
+
+/* ===== FOOTER ===== */
+.sidebar-footer {
+  padding: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.07);
+  color: #64748b;
+  font-size: 13.5px;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.logout-btn:hover {
+  background: rgba(239,68,68,0.1);
+  border-color: rgba(239,68,68,0.25);
+  color: #fca5a5;
 }
 </style>

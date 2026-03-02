@@ -11,16 +11,31 @@
         <svg class="s-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input v-model="search" class="s-input" placeholder="Cari judul, pengarang..." @input="onSearch"/>
       </div>
-      <select v-model="catFilter" class="f-select" @change="load(1)">
-        <option value="">Semua Kategori</option>
-        <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
-      </select>
-      <select v-model="sortBy" class="f-select" @change="load(1)">
-        <option value="latest">Terbaru</option>
-        <option value="popular">Terpopuler</option>
-        <option value="rating">Rating Tertinggi</option>
-        <option value="title">A-Z</option>
-      </select>
+
+      <!-- Custom: Kategori -->
+      <div class="custom-select-wrap" ref="catDropRef">
+        <button class="custom-select-btn" @click="catOpen = !catOpen">
+          <span :class="!catFilter ? 'sel-muted' : ''">
+            {{ catFilter ? (categories.find(c=>c.id==catFilter)?.name || 'Semua Kategori') : 'Semua Kategori' }}
+          </span>
+          <svg class="sel-chev" :class="{open: catOpen}" width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div v-if="catOpen" class="custom-select-dropdown">
+          <div class="sel-opt" :class="{active: !catFilter}" @click="catFilter=''; catOpen=false; load(1)">Semua Kategori</div>
+          <div class="sel-opt" v-for="c in categories" :key="c.id" :class="{active: catFilter==c.id}" @click="catFilter=c.id; catOpen=false; load(1)">{{ c.name }}</div>
+        </div>
+      </div>
+
+      <!-- Custom: Sort -->
+      <div class="custom-select-wrap" ref="sortDropRef">
+        <button class="custom-select-btn" @click="sortOpen = !sortOpen">
+          <span>{{ sortOptions.find(s=>s.value===sortBy)?.label || 'Terpopuler' }}</span>
+          <svg class="sel-chev" :class="{open: sortOpen}" width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div v-if="sortOpen" class="custom-select-dropdown">
+          <div class="sel-opt" v-for="s in sortOptions" :key="s.value" :class="{active: sortBy===s.value}" @click="sortBy=s.value; sortOpen=false; load(1)">{{ s.label }}</div>
+        </div>
+      </div>
     </div>
 
     <!-- Books Grid -->
@@ -36,7 +51,6 @@
 
     <div v-else class="books-grid">
       <router-link v-for="(b,i) in books" :key="b.id" :to="`/user/books/${b.slug}`" class="book-card" :style="{'--i':i}">
-        <!-- Cover: tampil foto kalau ada, fallback ke gradient -->
         <div class="bc-cover" :style="!b.cover_image ? {background: grad(b.id)} : {}">
           <img v-if="b.cover_image" :src="getCoverUrl(b.cover_image)" class="bc-img" :alt="b.title"/>
           <template v-else>
@@ -68,7 +82,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, watch } from "vue";
+import { defineComponent, ref, onMounted, onUnmounted, watch } from "vue";
 import { useRoute } from "vue-router";
 import ApiService from "@/core/services/ApiService";
 
@@ -80,12 +94,31 @@ export default defineComponent({
     const categories = ref<any[]>([]);
     const loading = ref(true);
     const search = ref("");
-    const catFilter = ref("");
+    const catFilter = ref<any>("");
     const sortBy = ref("latest");
     const page = ref(1);
     const lastPage = ref(1);
     const total = ref(0);
     let timer: any = null;
+
+    const catOpen = ref(false);
+    const sortOpen = ref(false);
+    const catDropRef = ref<HTMLElement|null>(null);
+    const sortDropRef = ref<HTMLElement|null>(null);
+
+    const sortOptions = [
+      { value: "latest", label: "Terbaru" },
+      { value: "popular", label: "Terpopuler" },
+      { value: "rating", label: "Rating Tertinggi" },
+      { value: "title", label: "A-Z" },
+    ];
+
+    const onOutsideClick = (e: MouseEvent) => {
+      if (catDropRef.value && !catDropRef.value.contains(e.target as Node)) catOpen.value = false;
+      if (sortDropRef.value && !sortDropRef.value.contains(e.target as Node)) sortOpen.value = false;
+    };
+    onMounted(() => document.addEventListener('click', onOutsideClick));
+    onUnmounted(() => document.removeEventListener('click', onOutsideClick));
 
     const grads = ["linear-gradient(145deg,#1a365d,#2b6cb0)","linear-gradient(145deg,#1a4731,#276749)","linear-gradient(145deg,#5b3a00,#d69e2e)","linear-gradient(145deg,#3b1f6e,#805ad5)","linear-gradient(145deg,#631a1a,#e53e3e)","linear-gradient(145deg,#0d4a4a,#319795)","linear-gradient(145deg,#2d1b69,#553c9a)","linear-gradient(145deg,#4a1942,#b83280)"];
     const grad = (id: number) => grads[id % grads.length];
@@ -120,7 +153,9 @@ export default defineComponent({
 
     watch(() => route.query.sort, (v) => { if (v) { sortBy.value = v as string; load(1); } });
 
-    return { books, categories, loading, search, catFilter, sortBy, page, lastPage, total, grad, getCoverUrl, load, onSearch, resetFilter };
+    return { books, categories, loading, search, catFilter, sortBy, sortOptions, page, lastPage, total,
+             catOpen, sortOpen, catDropRef, sortDropRef,
+             grad, getCoverUrl, load, onSearch, resetFilter };
   }
 });
 </script>
@@ -131,14 +166,27 @@ export default defineComponent({
 .page-wrap { display: flex; flex-direction: column; gap: 24px; }
 .page-title { font-family: 'Fraunces', serif; font-size: 24px; font-weight: 900; color: #f0f4ff; margin: 0 0 4px; }
 .page-sub { font-size: 13px; color: #4a6080; margin: 0; }
-.filter-bar { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.filter-bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 .search-wrap { position: relative; flex: 1; min-width: 200px; }
 .s-ico { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #4a6080; }
 .s-input { width: 100%; padding: 10px 14px 10px 38px; background: #0d0d0d; border: 1.5px solid #1a1a1a; border-radius: 12px; color: #e2e8f0; font-size: 13px; outline: none; transition: border-color 0.2s; font-family: 'DM Sans', sans-serif; }
 .s-input:focus { border-color: #2b6cb0; }
 .s-input::placeholder { color: #2d4a6a; }
-.f-select { padding: 10px 14px; background: #0d0d0d; border: 1.5px solid #1a1a1a; border-radius: 12px; color: #e2e8f0; font-size: 13px; outline: none; cursor: pointer; font-family: 'DM Sans', sans-serif; min-width: 140px; }
-.f-select:focus { border-color: #2b6cb0; }
+
+/* ✅ Custom Select */
+.custom-select-wrap { position: relative; min-width: 150px; }
+.custom-select-btn { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 14px; background: #0d0d0d; border: 1.5px solid #1a1a1a; border-radius: 12px; color: #e2e8f0; font-size: 13px; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+.custom-select-btn:hover { border-color: #2b6cb0; }
+.sel-muted { color: #4a6080; }
+.sel-chev { color: #4a6080; transition: transform 0.2s; flex-shrink: 0; }
+.sel-chev.open { transform: rotate(180deg); }
+.custom-select-dropdown { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #111; border: 1px solid #222; border-radius: 12px; overflow: hidden; z-index: 999; box-shadow: 0 12px 32px rgba(0,0,0,0.5); animation: dropIn 0.15s ease; min-width: 150px; }
+@keyframes dropIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+.sel-opt { padding: 10px 14px; font-size: 13px; color: #a0aec0; cursor: pointer; transition: background 0.15s; font-family: 'DM Sans', sans-serif; }
+.sel-opt:hover { background: rgba(255,255,255,0.05); color: #e2e8f0; }
+.sel-opt.active { color: #63b3ed; background: rgba(99,179,237,0.08); }
+
 .books-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 20px; }
 .skel-card { height: 280px; background: linear-gradient(90deg,#0d0d0d,#1a1a1a,#0d0d0d); background-size: 200%; border-radius: 14px; animation: shimmer 1.5s infinite; }
 @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }

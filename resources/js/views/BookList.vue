@@ -18,15 +18,35 @@
         <svg class="search-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input v-model="search" class="search-input" placeholder="Cari judul atau pengarang..." @input="onSearch"/>
       </div>
-      <select v-model="filterCategory" class="filter-select" @change="loadBooks">
-        <option value="">Semua Kategori</option>
-        <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-      </select>
-      <select v-model="filterStatus" class="filter-select" @change="loadBooks">
-        <option value="">Semua Status</option>
-        <option value="published">Published</option>
-        <option value="draft">Draft</option>
-      </select>
+
+      <!-- Custom dropdown: Kategori -->
+      <div class="custom-select-wrap" ref="catDropRef">
+        <button class="custom-select-btn" @click="catOpen = !catOpen">
+          <span>{{ filterCategory ? (categories.find(c=>c.id==filterCategory)?.name||'Semua Kategori') : 'Semua Kategori' }}</span>
+          <svg class="sel-chevron" :class="{open: catOpen}" width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div v-if="catOpen" class="custom-select-dropdown">
+          <div class="sel-option" :class="{active: !filterCategory}" @click="filterCategory=''; catOpen=false; loadBooks()">Semua Kategori</div>
+          <div class="sel-option" v-for="cat in categories" :key="cat.id" :class="{active: filterCategory==cat.id}" @click="filterCategory=cat.id; catOpen=false; loadBooks()">{{ cat.name }}</div>
+        </div>
+      </div>
+
+      <!-- Custom dropdown: Status -->
+      <div class="custom-select-wrap" ref="statDropRef">
+        <button class="custom-select-btn" @click="statOpen = !statOpen">
+          <span>{{ filterStatus === 'published' ? 'Published' : filterStatus === 'draft' ? 'Draft' : 'Semua Status' }}</span>
+          <svg class="sel-chevron" :class="{open: statOpen}" width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div v-if="statOpen" class="custom-select-dropdown">
+          <div class="sel-option" :class="{active: !filterStatus}" @click="filterStatus=''; statOpen=false; loadBooks()">Semua Status</div>
+          <div class="sel-option" :class="{active: filterStatus==='published'}" @click="filterStatus='published'; statOpen=false; loadBooks()">
+            <span class="sel-dot dot-green"></span> Published
+          </div>
+          <div class="sel-option" :class="{active: filterStatus==='draft'}" @click="filterStatus='draft'; statOpen=false; loadBooks()">
+            <span class="sel-dot dot-yellow"></span> Draft
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Table -->
@@ -59,7 +79,6 @@
           <tr v-for="book in books" :key="book.id" class="table-row">
             <td>
               <div class="book-cell">
-                <!-- ✅ Tampilkan cover kalau ada, kalau tidak pakai gradient -->
                 <div class="book-thumb" :style="!book.cover_image ? {background: randomGradient(book.id)} : {}">
                   <img v-if="book.cover_image" :src="getCoverUrl(book.cover_image)" class="cover-img" :alt="book.title"/>
                   <span v-else>{{ book.title.charAt(0) }}</span>
@@ -71,9 +90,7 @@
               </div>
             </td>
             <td><span class="tag-cat">{{ book.category?.name || '—' }}</span></td>
-            <td>
-              <span class="chapter-count">{{ book.chapters_count ?? '—' }} bab</span>
-            </td>
+            <td><span class="chapter-count">{{ book.chapters_count ?? '—' }} bab</span></td>
             <td><span class="views-num">{{ (book.total_views || 0).toLocaleString() }}</span></td>
             <td>
               <div class="rating-cell">
@@ -126,7 +143,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted } from "vue";
+import { defineComponent, ref, onMounted, onUnmounted } from "vue";
 import ApiService from "@/core/services/ApiService";
 
 export default defineComponent({
@@ -136,14 +153,26 @@ export default defineComponent({
     const categories = ref<any[]>([]);
     const loading = ref(true);
     const search = ref("");
-    const filterCategory = ref("");
+    const filterCategory = ref<any>("");
     const filterStatus = ref("");
     const currentPage = ref(1);
     const totalPages = ref(1);
     const totalBooks = ref(0);
     const deleteTarget = ref<any>(null);
     const deleting = ref(false);
+    const catOpen = ref(false);
+    const statOpen = ref(false);
+    const catDropRef = ref<HTMLElement|null>(null);
+    const statDropRef = ref<HTMLElement|null>(null);
     let searchTimer: any = null;
+
+    // Close on outside click
+    const onOutsideClick = (e: MouseEvent) => {
+      if (catDropRef.value && !catDropRef.value.contains(e.target as Node)) catOpen.value = false;
+      if (statDropRef.value && !statDropRef.value.contains(e.target as Node)) statOpen.value = false;
+    };
+    onMounted(() => document.addEventListener('click', onOutsideClick));
+    onUnmounted(() => document.removeEventListener('click', onOutsideClick));
 
     const gradients = [
       "linear-gradient(135deg,#3182ce,#2c5282)",
@@ -155,7 +184,6 @@ export default defineComponent({
     ];
     const randomGradient = (id: number) => gradients[id % gradients.length];
 
-    // ✅ Helper untuk generate URL cover
     const getCoverUrl = (path: string) => {
       const base = import.meta.env.VITE_APP_API_URL?.replace('/api', '') || 'http://127.0.0.1:8000';
       return `${base}/storage/${path}`;
@@ -211,6 +239,7 @@ export default defineComponent({
 
     return { books, categories, loading, search, filterCategory, filterStatus,
              currentPage, totalPages, totalBooks, deleteTarget, deleting,
+             catOpen, statOpen, catDropRef, statDropRef,
              randomGradient, getCoverUrl, loadBooks, onSearch, goPage, confirmDelete, doDelete };
   }
 });
@@ -228,14 +257,27 @@ export default defineComponent({
 .btn-add { display: flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #2b6cb0, #1C325E); color: white; border: none; border-radius: 12px; padding: 11px 20px; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
 .btn-add:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(43,108,176,0.4); color: white; }
 
-.filter-bar { display: flex; gap: 12px; flex-wrap: wrap; }
+.filter-bar { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
 .search-wrap { position: relative; flex: 1; min-width: 200px; }
 .search-ico { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #4a6080; }
 .search-input { width: 100%; padding: 10px 16px 10px 40px; background: #111; border: 1.5px solid #222; border-radius: 12px; color: #e2e8f0; font-size: 13px; outline: none; transition: border-color 0.2s; }
 .search-input:focus { border-color: #63b3ed; }
 .search-input::placeholder { color: #2d4a6a; }
-.filter-select { padding: 10px 16px; background: #111; border: 1.5px solid #222; border-radius: 12px; color: #e2e8f0; font-size: 13px; outline: none; cursor: pointer; transition: border-color 0.2s; min-width: 150px; }
-.filter-select:focus { border-color: #63b3ed; }
+
+/* ✅ Custom Select */
+.custom-select-wrap { position: relative; min-width: 160px; }
+.custom-select-btn { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; background: #111; border: 1.5px solid #222; border-radius: 12px; color: #e2e8f0; font-size: 13px; font-family: 'Outfit', sans-serif; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+.custom-select-btn:hover { border-color: #63b3ed; }
+.sel-chevron { color: #4a6080; transition: transform 0.2s; flex-shrink: 0; }
+.sel-chevron.open { transform: rotate(180deg); }
+.custom-select-dropdown { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #141414; border: 1px solid #2a2a2a; border-radius: 12px; overflow: hidden; z-index: 999; box-shadow: 0 12px 32px rgba(0,0,0,0.5); animation: dropIn 0.15s ease; min-width: 160px; }
+@keyframes dropIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+.sel-option { display: flex; align-items: center; gap: 8px; padding: 10px 14px; font-size: 13px; color: #a0aec0; cursor: pointer; transition: background 0.15s; }
+.sel-option:hover { background: rgba(255,255,255,0.05); color: #e2e8f0; }
+.sel-option.active { color: #63b3ed; background: rgba(99,179,237,0.08); }
+.sel-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.dot-green { background: #68d391; }
+.dot-yellow { background: #f6ad55; }
 
 .table-card { background: #111; border: 1px solid #222; border-radius: 18px; overflow: hidden; }
 .table-loading { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 60px; color: #4a6080; }
@@ -257,7 +299,6 @@ export default defineComponent({
 
 .book-cell { display: flex; align-items: center; gap: 12px; }
 .book-thumb { width: 40px; height: 52px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; color: white; flex-shrink: 0; overflow: hidden; }
-/* ✅ Cover image styling */
 .cover-img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
 .book-cell-title { font-size: 13px; font-weight: 600; color: #e2e8f0; }
 .book-cell-author { font-size: 11px; color: #4a6080; margin-top: 2px; }

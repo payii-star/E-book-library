@@ -11,6 +11,7 @@
               <KTContent />
             </div>
           </div>
+          <KTFooter />
         </div>
       </div>
     </div>
@@ -23,6 +24,7 @@ import { useRoute } from "vue-router";
 import KTHeader from "@/layouts/default-layout/components/header/Header.vue";
 import KTToolbar from "@/layouts/default-layout/components/toolbar/Toolbar.vue";
 import KTContent from "@/layouts/default-layout/components/content/Content.vue";
+import KTFooter from "@/layouts/default-layout/components/footer/Footer.vue";
 import KTUserSidebar from "@/layouts/Usersidebar.vue";
 import { reinitializeComponents } from "@/core/plugins/keenthemes";
 import LayoutService from "@/core/services/LayoutService";
@@ -33,6 +35,7 @@ export default defineComponent({
     KTHeader,
     KTToolbar,
     KTContent,
+    KTFooter,
     KTUserSidebar,
   },
   setup() {
@@ -56,7 +59,6 @@ export default defineComponent({
     });
 
     onUnmounted(() => {
-      // Cleanup body attrs saat leave layout
       document.body.removeAttribute("data-kt-app-layout");
       document.body.removeAttribute("data-kt-app-sidebar-enabled");
     });

@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\BookmarkController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\StatisticController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\ReadingHistoryController;
 
 // ==================== AUTH ====================
 Route::post('/login',           [AuthController::class, 'login']);
@@ -50,6 +51,10 @@ Route::get('/bookmarks',             [BookmarkController::class, 'index']);
 Route::post('/bookmarks',            [BookmarkController::class, 'store']);
 Route::delete('/bookmarks/{bookId}', [BookmarkController::class, 'destroy']);
 
+// ==================== READING HISTORY ====================
+Route::get('/reading-history',  [ReadingHistoryController::class, 'index']);
+Route::post('/reading-history', [ReadingHistoryController::class, 'store']);
+
 // ==================== ADMIN ROUTES ====================
 Route::prefix('admin')->group(function () {
     // Statistik dashboard
@@ -59,7 +64,7 @@ Route::prefix('admin')->group(function () {
     Route::get('/books',          [BookController::class, 'adminIndex']);
     Route::post('/books',         [BookController::class, 'store']);
     Route::get('/books/{id}',     [BookController::class, 'adminShow']);
-    Route::post('/books/{id}',    [BookController::class, 'update']);  // POST karena pakai FormData
+    Route::post('/books/{id}',    [BookController::class, 'update']);
     Route::delete('/books/{id}',  [BookController::class, 'destroy']);
 
     // Kelola chapter

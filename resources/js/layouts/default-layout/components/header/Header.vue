@@ -14,13 +14,9 @@
         'container-xxl': !headerWidthFluid,
       }"
     >
-
-      <!-- LEFT: Mobile Toggle only -->
+      <!-- LEFT: Mobile Toggle -->
       <div class="d-flex align-items-center">
-        <div
-          class="d-flex align-items-center d-lg-none"
-          id="kt_app_sidebar_mobile_toggle"
-        >
+        <div class="d-flex align-items-center d-lg-none" id="kt_app_sidebar_mobile_toggle">
           <button class="mobile-toggle-btn">
             <span class="bar bar-1"></span>
             <span class="bar bar-2"></span>
@@ -29,27 +25,24 @@
         </div>
       </div>
 
-      <!-- RIGHT -->
+      <!-- RIGHT: Avatar + Nama -->
       <div class="d-flex align-items-center gap-3">
-
-        <!-- Status indicator -->
-        <div class="status-pill d-none d-md-flex align-items-center gap-2">
-          <span class="status-dot"></span>
-          <span class="status-text">System Online</span>
-        </div>
-
-        <div class="header-divider d-none d-md-block"></div>
-
-        <!-- USER (no dropdown) -->
         <div class="user-info d-flex align-items-center gap-2">
           <div class="avatar-ring">
-            <div class="avatar-label">{{ initials }}</div>
+            <!-- Foto profil kalau ada -->
+            <img
+              v-if="authStore.user.avatar"
+              :src="avatarUrl"
+              alt="avatar"
+              class="avatar-img"
+            />
+            <!-- Fallback inisial -->
+            <div v-else class="avatar-label">{{ initials }}</div>
           </div>
           <div class="d-none d-sm-block">
             <div class="user-name">{{ authStore.user.name }}</div>
           </div>
         </div>
-
       </div>
     </div>
   </div>
@@ -59,10 +52,7 @@
 import { defineComponent, computed } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import { useRouter } from "vue-router";
-import {
-  headerDisplay,
-  headerWidthFluid,
-} from "@/layouts/default-layout/config/helper";
+import { headerDisplay, headerWidthFluid } from "@/layouts/default-layout/config/helper";
 
 export default defineComponent({
   name: "layout-header",
@@ -71,13 +61,13 @@ export default defineComponent({
     const router = useRouter();
 
     const initials = computed(() => {
-      if (!authStore.user.name) return "A";
-      return authStore.user.name
-        .split(" ")
-        .map((n: string) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2);
+      if (!authStore.user.name) return "U";
+      return authStore.user.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
+    });
+
+    const avatarUrl = computed(() => {
+      if (!authStore.user.avatar) return null;
+      return `${import.meta.env.VITE_APP_API_URL?.replace('/api', '')}/storage/${authStore.user.avatar}`;
     });
 
     const logout = () => {
@@ -85,13 +75,7 @@ export default defineComponent({
       router.push("/sign-in");
     };
 
-    return {
-      headerDisplay,
-      headerWidthFluid,
-      authStore,
-      initials,
-      logout,
-    };
+    return { headerDisplay, headerWidthFluid, authStore, initials, avatarUrl, logout };
   },
 });
 </script>
@@ -100,11 +84,7 @@ export default defineComponent({
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
 
 .app-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
   height: 64px;
   background: rgba(8, 10, 18, 0.75);
   backdrop-filter: blur(20px) saturate(180%);
@@ -113,98 +93,35 @@ export default defineComponent({
   font-family: 'DM Sans', sans-serif;
   overflow: hidden;
 }
+.app-container { height: 100%; padding: 0 24px; position: relative; z-index: 2; }
+.glow-orb { position: absolute; border-radius: 50%; filter: blur(60px); pointer-events: none; z-index: 0; }
+.glow-left { width: 200px; height: 100px; background: rgba(59, 130, 246, 0.08); top: -30px; left: 40%; }
+.glow-right { width: 160px; height: 80px; background: rgba(139, 92, 246, 0.06); top: -20px; right: 120px; }
 
-.app-container {
-  height: 100%;
-  padding: 0 24px;
-  position: relative;
-  z-index: 2;
-}
-
-.glow-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(60px);
-  pointer-events: none;
-  z-index: 0;
-}
-.glow-left {
-  width: 200px; height: 100px;
-  background: rgba(59, 130, 246, 0.08);
-  top: -30px; left: 40%;
-}
-.glow-right {
-  width: 160px; height: 80px;
-  background: rgba(139, 92, 246, 0.06);
-  top: -20px; right: 120px;
-}
-
-/* Mobile toggle */
 .mobile-toggle-btn {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  width: 38px; height: 38px;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 5px; cursor: pointer;
-  transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px; width: 38px; height: 38px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 5px; cursor: pointer; transition: all 0.2s ease;
 }
-.mobile-toggle-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.18);
-}
+.mobile-toggle-btn:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.18); }
 .bar { display: block; height: 1.5px; background: rgba(255, 255, 255, 0.75); border-radius: 2px; }
-.bar-1 { width: 16px; }
-.bar-2 { width: 12px; }
-.bar-3 { width: 14px; }
+.bar-1 { width: 16px; } .bar-2 { width: 12px; } .bar-3 { width: 14px; }
 
-/* Status pill */
-.status-pill {
-  background: rgba(16, 185, 129, 0.08);
-  border: 1px solid rgba(16, 185, 129, 0.2);
-  border-radius: 20px;
-  padding: 5px 12px;
-}
-.status-dot {
-  width: 6px; height: 6px;
-  background: #10b981; border-radius: 50%;
-  box-shadow: 0 0 6px rgba(16, 185, 129, 0.8);
-  animation: pulse-dot 2.5s ease-in-out infinite;
-}
-@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-.status-text { font-size: 11.5px; font-weight: 500; color: #6ee7b7; letter-spacing: 0.3px; }
-
-.header-divider { width: 1px; height: 28px; background: rgba(255, 255, 255, 0.08); }
-
-/* User info (no dropdown) */
-.user-info {
-  padding: 5px 10px 5px 5px;
-  border-radius: 40px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.04);
-}
-
-/* Avatar */
+.user-info { padding: 5px 10px 5px 5px; border-radius: 40px; border: 1px solid rgba(255, 255, 255, 0.08); background: rgba(255, 255, 255, 0.04); }
 .avatar-ring {
   width: 34px; height: 34px; border-radius: 50%;
   background: linear-gradient(135deg, #3b82f6, #8b5cf6);
   display: flex; align-items: center; justify-content: center;
-  position: relative; flex-shrink: 0;
+  position: relative; flex-shrink: 0; overflow: hidden;
 }
 .avatar-ring::before {
-  content: '';
-  position: absolute; inset: -2px; border-radius: 50%;
+  content: ''; position: absolute; inset: -2px; border-radius: 50%;
   background: linear-gradient(135deg, rgba(59,130,246,0.5), rgba(139,92,246,0.5));
   z-index: -1;
 }
-.avatar-label {
-  font-family: 'Syne', sans-serif;
-  font-weight: 700; font-size: 13px; color: #fff; letter-spacing: 0.3px;
-}
-
+.avatar-img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; }
+.avatar-label { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; color: #fff; letter-spacing: 0.3px; }
 .user-name { font-size: 13px; font-weight: 500; color: #e2e8f0; line-height: 1; }
-
-.gap-2 { gap: 8px !important; }
-.gap-3 { gap: 12px !important; }
+.gap-2 { gap: 8px !important; } .gap-3 { gap: 12px !important; }
 </style>
