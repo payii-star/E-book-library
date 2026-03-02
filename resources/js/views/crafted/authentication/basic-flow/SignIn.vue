@@ -43,23 +43,56 @@
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
               </svg>
             </span>
-            <Field tabindex="2" class="custom-input" type="password" name="password" placeholder="••••••••" autocomplete="off"/>
+            <Field tabindex="2" class="custom-input" :type="showPassword ? 'text' : 'password'" name="password" placeholder="••••••••" autocomplete="off"/>
+            <!-- ✅ Toggle mata -->
+            <button type="button" class="eye-btn" @click="showPassword = !showPassword" tabindex="-1">
+              <svg v-if="showPassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
+                <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            </button>
           </div>
           <div class="fv-plugins-message-container">
             <div class="fv-help-block error-text"><ErrorMessage name="password"/></div>
           </div>
         </div>
 
+        <!-- ✅ Popup sukses -->
+        <Teleport to="body">
+          <div v-if="showSuccess" class="success-overlay">
+            <div class="success-popup">
+              <div class="success-circle">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </div>
+              <div class="success-title">Login Berhasil!</div>
+              <div class="success-sub">Mengalihkan ke dashboard...</div>
+            </div>
+          </div>
+        </Teleport>
+
+        <!-- Inline error alert -->
+        <div v-if="loginError" class="error-alert mb-5">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          {{ loginError }}
+        </div>
+
         <div>
-          <button tabindex="3" type="submit" ref="submitButton" id="kt_sign_in_submit" class="submit-btn w-100 mb-6">
-            <span class="indicator-label">
+          <button tabindex="3" type="submit" class="submit-btn w-100 mb-6" :disabled="loading">
+            <span v-if="!loading" class="indicator-label">
               <span>Masuk</span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <line x1="5" y1="12" x2="19" y2="12"></line>
                 <polyline points="12 5 19 12 12 19"></polyline>
               </svg>
             </span>
-            <span class="indicator-progress">
+            <span v-else class="indicator-progress">
               <span class="spinner-border spinner-border-sm me-2"></span>Mohon tunggu...
             </span>
           </button>
@@ -94,7 +127,6 @@ import { defineComponent, ref } from "vue";
 import { ErrorMessage, Field, Form as VForm } from "vee-validate";
 import { useAuthStore, type User } from "@/stores/auth";
 import { useRouter } from "vue-router";
-import Swal from "sweetalert2/dist/sweetalert2.js";
 import * as Yup from "yup";
 
 export default defineComponent({
@@ -103,28 +135,45 @@ export default defineComponent({
   setup() {
     const store = useAuthStore();
     const router = useRouter();
-    const submitButton = ref<HTMLButtonElement | null>(null);
+    const loading = ref(false);
+    const loginError = ref("");
+    const showPassword = ref(false);
+    const showSuccess = ref(false);
+
     const login = Yup.object().shape({
       email: Yup.string().email().required().label("Email"),
       password: Yup.string().min(4).required().label("Password"),
     });
+
     const onSubmitLogin = async (values: any) => {
-      values = values as User;
-      store.logout();
-      if (submitButton.value) { submitButton.value!.disabled = true; submitButton.value.setAttribute("data-kt-indicator", "on"); }
-      await store.login(values);
-      const error = Object.values(store.errors);
-      if (error.length === 0) {
-        Swal.fire({ text: "Login berhasil!", icon: "success", buttonsStyling: false, confirmButtonText: "Ok!", heightAuto: false, customClass: { confirmButton: "btn fw-semibold btn-light-primary" } })
-          .then(() => { store.isAdmin() ? router.push({ name: "dashboard" }) : router.push({ name: "user-dashboard" }); });
+      loginError.value = "";
+      loading.value = true;
+      store.errors = {};
+
+      await store.login(values as User);
+
+      loading.value = false;
+
+      if (store.isAuthenticated && store.user?.api_token) {
+        showSuccess.value = true;
+        setTimeout(() => {
+          if (store.isAdmin()) {
+            router.push({ name: "dashboard" });
+          } else {
+            router.push({ name: "user-dashboard" });
+          }
+        }, 300);
       } else {
-        Swal.fire({ text: error[0] as string, icon: "error", buttonsStyling: false, confirmButtonText: "Coba lagi!", heightAuto: false, customClass: { confirmButton: "btn fw-semibold btn-light-danger" } })
-          .then(() => { store.errors = {}; });
+        const errors = store.errors;
+        if (errors && Object.keys(errors).length > 0) {
+          loginError.value = Object.values(errors)[0] as string;
+        } else {
+          loginError.value = "Email atau password salah.";
+        }
       }
-      submitButton.value?.removeAttribute("data-kt-indicator");
-      submitButton.value!.disabled = false;
     };
-    return { onSubmitLogin, login, submitButton, getAssetPath };
+
+    return { onSubmitLogin, login, loading, loginError, showPassword, showSuccess, getAssetPath };
   },
 });
 </script>
@@ -166,7 +215,7 @@ export default defineComponent({
 .custom-input {
   width: 100%; background: rgba(49,130,206,0.06);
   border: 1.5px solid rgba(99,179,237,0.18);
-  border-radius: 12px; padding: 14px 16px 14px 44px;
+  border-radius: 12px; padding: 14px 44px 14px 44px;
   color: #e2e8f0; font-size: 14px; font-family: 'DM Sans', sans-serif;
   transition: all 0.25s; outline: none;
 }
@@ -175,23 +224,43 @@ export default defineComponent({
   border-color: #63b3ed; background: rgba(99,179,237,0.08);
   box-shadow: 0 0 0 4px rgba(99,179,237,0.1);
 }
+
+/* ✅ Tombol mata */
+.eye-btn {
+  position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; color: #4a6080; cursor: pointer;
+  display: flex; align-items: center; padding: 0;
+  transition: color 0.2s; z-index: 1;
+}
+.eye-btn:hover { color: #63b3ed; }
+
 .error-text { color: #fc8181; font-size: 12px; margin-top: 6px; }
+
+.error-alert {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(229,62,62,0.1); border: 1px solid rgba(229,62,62,0.25);
+  border-radius: 10px; padding: 12px 14px;
+  color: #fc8181; font-size: 13px; font-weight: 500;
+}
 
 .submit-btn {
   display: flex; align-items: center; justify-content: center; gap: 8px;
   background: linear-gradient(135deg, #2b6cb0 0%, #1C325E 100%);
   color: #fff; border: none; border-radius: 12px; padding: 15px 24px;
   font-size: 15px; font-weight: 600; font-family: 'DM Sans', sans-serif;
-  cursor: pointer; transition: all 0.25s; position: relative; overflow: hidden;
+  cursor: pointer; transition: all 0.25s; position: relative; overflow: hidden; width: 100%;
 }
 .submit-btn::before {
   content: ''; position: absolute; inset: 0;
   background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
   pointer-events: none;
 }
-.submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(43,108,176,0.5); }
-.submit-btn:active { transform: translateY(0); }
+.submit-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(43,108,176,0.5); }
+.submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 .submit-btn .indicator-label { display: flex; align-items: center; gap: 8px; }
+.indicator-progress { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.spinner-border { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .divider-wrapper { display: flex; align-items: center; gap: 12px; }
 .divider-line { flex: 1; height: 1px; background: rgba(99,179,237,0.12); }
@@ -210,4 +279,30 @@ export default defineComponent({
   color: #e2e8f0; transform: translateY(-1px);
 }
 .social-btn-full { grid-column: span 2; }
+
+/* ✅ Popup sukses */
+.success-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(8px); display: flex; align-items: center;
+  justify-content: center; z-index: 99999;
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+.success-popup {
+  background: #0a0f1e; border: 1px solid rgba(99,179,237,0.3);
+  border-radius: 24px; padding: 40px 48px; text-align: center;
+  box-shadow: 0 0 40px rgba(99,179,237,0.15);
+  animation: popUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes popUp { from{opacity:0;transform:scale(0.8)} to{opacity:1;transform:scale(1)} }
+.success-circle {
+  width: 72px; height: 72px; border-radius: 50%;
+  background: rgba(99,179,237,0.15); border: 2px solid rgba(99,179,237,0.4);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 16px; color: #63b3ed;
+  animation: scaleIn 0.4s cubic-bezier(0.34,1.56,0.64,1) 0.1s both;
+}
+@keyframes scaleIn { from{transform:scale(0)} to{transform:scale(1)} }
+.success-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: #f0f4ff; margin-bottom: 6px; }
+.success-sub { font-size: 13px; color: #63b3ed; }
 </style>

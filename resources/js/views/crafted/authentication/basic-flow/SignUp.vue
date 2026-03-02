@@ -36,7 +36,7 @@
                 <circle cx="12" cy="7" r="4"></circle>
               </svg>
             </span>
-            <Field class="custom-input with-icon" type="text" placeholder="Nama lengkap kamu" name="name" autocomplete="off"/>
+            <Field class="custom-input" type="text" placeholder="Nama lengkap kamu" name="name" autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly')"/>
           </div>
           <div class="fv-plugins-message-container">
             <div class="fv-help-block error-text"><ErrorMessage name="name"/></div>
@@ -53,13 +53,13 @@
                 <polyline points="22,6 12,13 2,6"></polyline>
               </svg>
             </span>
-            <Field class="custom-input with-icon" type="email" placeholder="nama@email.com" name="email" autocomplete="off"/>
+            <Field class="custom-input" type="email" placeholder="nama@email.com" name="email" autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly')"/>
           </div>
           <div class="fv-plugins-message-container"><div class="fv-help-block error-text"><ErrorMessage name="email"/></div></div>
         </div>
 
         <!-- Password -->
-        <div class="fv-row mb-5" data-kt-password-meter="true">
+        <div class="fv-row mb-5">
           <label class="input-label">Password</label>
           <div class="input-wrapper">
             <span class="input-icon">
@@ -68,14 +68,22 @@
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
               </svg>
             </span>
-            <Field class="custom-input with-icon" type="password" placeholder="Min. 8 karakter" name="password" autocomplete="off"/>
+            <Field class="custom-input" :type="showPassword ? 'text' : 'password'" placeholder="Min. 8 karakter" name="password" autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly')"/>
+            <button type="button" class="eye-btn" @click="showPassword = !showPassword" tabindex="-1">
+              <svg v-if="showPassword" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+              </svg>
+              <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
+                <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            </button>
           </div>
           <div class="fv-plugins-message-container"><div class="fv-help-block error-text"><ErrorMessage name="password"/></div></div>
-          <div class="d-flex gap-2 mt-3" data-kt-password-meter-control="highlight">
-            <div class="flex-grow-1 bg-secondary bg-active-success rounded h-4px"></div>
-            <div class="flex-grow-1 bg-secondary bg-active-success rounded h-4px"></div>
-            <div class="flex-grow-1 bg-secondary bg-active-success rounded h-4px"></div>
-            <div class="flex-grow-1 bg-secondary bg-active-success rounded h-4px"></div>
+          <!-- Password strength bar -->
+          <div class="strength-bar mt-3">
+            <div v-for="i in 4" :key="i" class="strength-segment" :class="{ active: passwordStrength >= i }"></div>
           </div>
           <div class="password-hint mt-2">Gunakan 8+ karakter dengan kombinasi huruf, angka & simbol.</div>
         </div>
@@ -89,7 +97,17 @@
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
               </svg>
             </span>
-            <Field class="custom-input with-icon" type="password" placeholder="Ulangi password" name="password_confirmation" autocomplete="off"/>
+            <Field class="custom-input" :type="showConfirm ? 'text' : 'password'" placeholder="Ulangi password" name="password_confirmation" autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly')"/>
+            <button type="button" class="eye-btn" @click="showConfirm = !showConfirm" tabindex="-1">
+              <svg v-if="showConfirm" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+              </svg>
+              <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
+                <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            </button>
           </div>
           <div class="fv-plugins-message-container"><div class="fv-help-block error-text"><ErrorMessage name="password_confirmation"/></div></div>
         </div>
@@ -102,16 +120,37 @@
           </label>
         </div>
 
+        <!-- Error alert -->
+        <div v-if="registerError" class="error-alert mb-5">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          {{ registerError }}
+        </div>
+
+        <!-- Popup sukses -->
+        <Teleport to="body">
+          <div v-if="showSuccess" class="success-overlay">
+            <div class="success-popup">
+              <div class="success-circle">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </div>
+              <div class="success-title">Akun Berhasil Dibuat!</div>
+              <div class="success-sub">Mengalihkan ke dashboard...</div>
+            </div>
+          </div>
+        </Teleport>
+
         <!-- Submit -->
-        <button id="kt_sign_up_submit" ref="submitButton" type="submit" class="submit-btn w-100">
-          <span class="indicator-label">
+        <button type="submit" class="submit-btn w-100" :disabled="loading">
+          <span v-if="!loading" class="indicator-label">
             <span>Buat Akun</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="5" y1="12" x2="19" y2="12"></line>
               <polyline points="12 5 19 12 12 19"></polyline>
             </svg>
           </span>
-          <span class="indicator-progress">
+          <span v-else class="indicator-progress">
             <span class="spinner-border spinner-border-sm me-2"></span>Mohon tunggu...
           </span>
         </button>
@@ -123,13 +162,11 @@
 
 <script lang="ts">
 import { getAssetPath } from "@/core/helpers/assets";
-import { defineComponent, nextTick, onMounted, ref } from "vue";
+import { defineComponent, ref, watch } from "vue";
 import { ErrorMessage, Field, Form as VForm } from "vee-validate";
 import * as Yup from "yup";
 import { useAuthStore, type User } from "@/stores/auth";
 import { useRouter } from "vue-router";
-import { PasswordMeterComponent } from "@/assets/ts/components";
-import Swal from "sweetalert2/dist/sweetalert2.js";
 
 export default defineComponent({
   name: "sign-up",
@@ -137,7 +174,13 @@ export default defineComponent({
   setup() {
     const store = useAuthStore();
     const router = useRouter();
-    const submitButton = ref<HTMLButtonElement | null>(null);
+    const loading = ref(false);
+    const registerError = ref("");
+    const showSuccess = ref(false);
+    const showPassword = ref(false);
+    const showConfirm = ref(false);
+    const passwordStrength = ref(0);
+    const passwordValue = ref("");
 
     const registration = Yup.object().shape({
       name: Yup.string().required().label("Nama Lengkap"),
@@ -149,42 +192,40 @@ export default defineComponent({
         .label("Konfirmasi Password"),
     });
 
-    onMounted(() => { nextTick(() => { PasswordMeterComponent.bootstrap(); }); });
-
-    const onSubmitRegister = async (values: any) => {
-      values = values as User;
-      store.logout();
-      submitButton.value!.disabled = true;
-      submitButton.value?.setAttribute("data-kt-indicator", "on");
-
-      await store.register(values);
-      const error = Object.values(store.errors);
-
-      if (error.length === 0) {
-        Swal.fire({
-          text: "Akun berhasil dibuat!",
-          icon: "success",
-          buttonsStyling: false,
-          confirmButtonText: "Ok!",
-          heightAuto: false,
-          customClass: { confirmButton: "btn fw-semibold btn-light-primary" },
-        }).then(() => { router.push({ name: "user-dashboard" }); });
-      } else {
-        Swal.fire({
-          text: error[0] as string,
-          icon: "error",
-          buttonsStyling: false,
-          confirmButtonText: "Coba lagi!",
-          heightAuto: false,
-          customClass: { confirmButton: "btn fw-semibold btn-light-danger" },
-        });
-      }
-
-      submitButton.value?.removeAttribute("data-kt-indicator");
-      submitButton.value!.disabled = false;
+    const calcStrength = (val: string) => {
+      let score = 0;
+      if (val.length >= 8) score++;
+      if (/[A-Z]/.test(val)) score++;
+      if (/[0-9]/.test(val)) score++;
+      if (/[^A-Za-z0-9]/.test(val)) score++;
+      return score;
     };
 
-    return { registration, onSubmitRegister, submitButton, getAssetPath };
+    watch(passwordValue, (val) => {
+      passwordStrength.value = calcStrength(val);
+    });
+
+    const onSubmitRegister = async (values: any) => {
+      registerError.value = "";
+      loading.value = true;
+      store.errors = {};
+
+      await store.register(values as User);
+
+      loading.value = false;
+
+      const error = Object.values(store.errors);
+      if (error.length === 0) {
+        showSuccess.value = true;
+        setTimeout(() => {
+          router.push({ name: "user-dashboard" });
+        }, 300);
+      } else {
+        registerError.value = error[0] as string;
+      }
+    };
+
+    return { registration, onSubmitRegister, loading, registerError, showSuccess, showPassword, showConfirm, passwordStrength, passwordValue, getAssetPath };
   },
 });
 </script>
@@ -242,11 +283,10 @@ export default defineComponent({
 .custom-input {
   width: 100%; background: rgba(49,130,206,0.06);
   border: 1.5px solid rgba(99,179,237,0.18);
-  border-radius: 12px; padding: 13px 16px;
+  border-radius: 12px; padding: 13px 44px;
   color: #e2e8f0; font-size: 14px; font-family: 'DM Sans', sans-serif;
   transition: all 0.25s; outline: none;
 }
-.custom-input.with-icon { padding-left: 44px; }
 .custom-input::placeholder { color: #2d4a6a; }
 .custom-input:focus {
   border-color: #63b3ed; background: rgba(99,179,237,0.08);
@@ -255,23 +295,79 @@ export default defineComponent({
 .error-text { color: #fc8181; font-size: 12px; margin-top: 5px; }
 .password-hint { color: #2d4a6a; font-size: 11.5px; }
 
+/* Eye toggle */
+.eye-btn {
+  position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; color: #4a6080; cursor: pointer;
+  display: flex; align-items: center; padding: 0; transition: color 0.2s; z-index: 1;
+}
+.eye-btn:hover { color: #63b3ed; }
+
+/* Strength bar */
+.strength-bar { display: flex; gap: 6px; }
+.strength-segment {
+  flex: 1; height: 4px; border-radius: 4px;
+  background: rgba(99,179,237,0.12); transition: background 0.3s;
+}
+.strength-segment.active { background: #63b3ed; }
+
 .toc-wrapper { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
 .toc-checkbox { width: 16px; height: 16px; margin-top: 2px; accent-color: #63b3ed; flex-shrink: 0; }
 .toc-text { color: #8896b3; font-size: 13px; line-height: 1.5; }
+
+/* Error alert */
+.error-alert {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(229,62,62,0.1); border: 1px solid rgba(229,62,62,0.25);
+  border-radius: 10px; padding: 12px 14px;
+  color: #fc8181; font-size: 13px; font-weight: 500;
+}
 
 .submit-btn {
   display: flex; align-items: center; justify-content: center; gap: 8px;
   background: linear-gradient(135deg, #2b6cb0 0%, #1C325E 100%);
   color: #fff; border: none; border-radius: 12px; padding: 15px 24px;
   font-size: 15px; font-weight: 600; font-family: 'DM Sans', sans-serif;
-  cursor: pointer; transition: all 0.25s; position: relative; overflow: hidden;
+  cursor: pointer; transition: all 0.25s; position: relative; overflow: hidden; width: 100%;
 }
 .submit-btn::before {
   content: ''; position: absolute; inset: 0;
   background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
   pointer-events: none;
 }
-.submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(43,108,176,0.5); }
-.submit-btn:active { transform: translateY(0); }
+.submit-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(43,108,176,0.5); }
+.submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 .submit-btn .indicator-label { display: flex; align-items: center; gap: 8px; }
+.indicator-progress { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.spinner-border {
+  display: inline-block; width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+  border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Popup sukses */
+.success-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(8px); display: flex; align-items: center;
+  justify-content: center; z-index: 99999; animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+.success-popup {
+  background: #0a0f1e; border: 1px solid rgba(99,179,237,0.3);
+  border-radius: 24px; padding: 40px 48px; text-align: center;
+  box-shadow: 0 0 40px rgba(99,179,237,0.15);
+  animation: popUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes popUp { from{opacity:0;transform:scale(0.8)} to{opacity:1;transform:scale(1)} }
+.success-circle {
+  width: 72px; height: 72px; border-radius: 50%;
+  background: rgba(99,179,237,0.15); border: 2px solid rgba(99,179,237,0.4);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 16px; color: #63b3ed;
+  animation: scaleIn 0.4s cubic-bezier(0.34,1.56,0.64,1) 0.1s both;
+}
+@keyframes scaleIn { from{transform:scale(0)} to{transform:scale(1)} }
+.success-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: #f0f4ff; margin-bottom: 6px; }
+.success-sub { font-size: 13px; color: #63b3ed; }
 </style>
